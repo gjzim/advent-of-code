@@ -74,3 +74,27 @@ while ip < len(instructions):
 
 solution1 = ','.join(output)
 print(solution1)
+
+def is_valid(a, target):
+    b = a % 8
+    b ^= 5
+    c = a // (2 ** b)
+    b ^= 6
+    b ^= c
+
+    return b % 8 == target
+
+def dfs(prefix, index):
+    if index < 0:
+        return [prefix]
+
+    results = []
+    for incr in range(8):
+        reg_a = (prefix * 8) + incr
+        if is_valid(reg_a, instructions[index]):
+            results.extend(dfs(reg_a, index - 1))
+
+    return results
+
+solution2 = sorted(dfs(0, len(instructions) - 1))[0]
+print(solution2)
