@@ -1,6 +1,8 @@
+from collections import deque
+from itertools import combinations
+
 with open("input.txt") as f:
     data = f.read().strip()
-
 
 lines = data.split("\n")
 grid = [list(line) for line in lines]
@@ -25,66 +27,43 @@ def get_target_position():
 start_row, start_col = get_start_position()
 target_row, target_col = get_target_position()
 
-dirs = {
-    'n': (-1, 0),
-    's': (1, 0),
-    'w': (0, -1),
-    'e': (0, 1)
-}
-
 def out_of_bounds(row, col):
-    return row < 0 or row >= ROWS or col < 0 or col >= COLS
+    return row < 1 or row >= ROWS - 1 or col < 1 or col >= COLS - 1
 
-# def bfs():
-#     costs = {}
-#     q = deque([(start_row, start_col, 'e', 0)])
-#     result = float('inf')
-#
-#     while q:
-#         row, col, face, cost = q.popleft()
-#         key = f"{row},{col},{face}"
-#
-#         if grid[row][col] == '#' or (key in costs and costs[key] <= cost):
-#             continue
-#
-#         if row == target_row and col == target_col:
-#             result = min(result, cost)
-#
-#         costs[key] = cost
-#         dr, dc = dirs[face]
-#         q.append((row + dr, col + dc, face, cost + 1))
-#         parents[(row + dr, col + dc, cost + 1)].append((row, col, cost))
-#         for n_face in movements[face]:
-#             parents[(row, col, cost + 1000)].append((row, col, cost))
-#             q.append((row, col, n_face, cost + 1000))
-#
-#     return result
+def bfs():
+    dists = {}
+    q = deque([(start_row, start_col, 0)])
 
-scores = []
-visited = set()
-def dfs(row, col, dir, score, power):
-    key = f"{row},{col},{dir},{power}"
-    if out_of_bounds(row, col) or key in visited or power < 0:
-        return
-
-    if row == target_row and col == target_col:
-        scores.append(score)
-        return
-
-    visited.add(key)
-
-    for n_dir, (dr, dc) in enumerate([(-1, 0), (1, 0), (0, -1), (0, 1)]):
-        n_row, n_col = row + dr, col + dc
-
-        if out_of_bounds(n_row, n_col):
+    while q:
+        row, col, cost = q.popleft()
+        if (row, col) in dists or \
+            out_of_bounds(row, col) or \
+            grid[row][col] == '#':
             continue
 
-        dfs(n_row, n_col, n_dir, score + 1, power - (grid[n_row][n_col] == '#'))
+        dists[(row, col)] = cost
 
-def print_grid():
-    for row in grid:
-        print(''.join(row))
+        if row == target_row and col == target_col:
+            continue
 
-dfs(start_row, start_col, -1, 0, 2)
-# print(visited)
-print(scores)
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            q.append((row + dr, col + dc, cost + 1))
+
+    return dists
+
+dists = bfs()
+solution1 = 0
+solution2 = 0
+
+for p1, p2 in combinations(dists.items(), 2):
+    (p1_row, p1_col), p1_dist = p1
+    (p2_row, p2_col), p2_dist = p2
+
+    manhattan_dist = abs(p1_row - p2_row) + abs(p1_col - p2_col)
+    if manhattan_dist == 2 and abs(p1_dist - p2_dist) - manhattan_dist >= 100:
+        solution1 += 1
+    if manhattan_dist <= 20 and abs(p1_dist - p2_dist) - manhattan_dist >= 100:
+        solution2 += 1
+
+print(solution1)
+print(solution2)
